@@ -54,6 +54,7 @@ is distributed under the [ISC license](LICENSE.md).
     - [Understanding transactions](#understanding-transactions)
     - [A three-stack lock-free queue](#a-three-stack-lock-free-queue)
     - [A rehashable lock-free hash table](#a-rehashable-lock-free-hash-table)
+  - [Blocking](#blocking)
 - [Development](#development)
 
 ## A quick tour
@@ -516,25 +517,6 @@ Or transfer elements between different transactional data structures:
 
 The ability to compose transactions allows algorithms and data-structures to be
 used for a wider variety of purposes.
-
-#### About transactions
-
-The transaction mechanism provided by **kcas** is quite intentionally designed
-to be very simple and efficient. This also means that it cannot provide certain
-features, because adding such features would either add significant dependencies
-or overheads to the otherwise simple and efficient implementation. In
-particular, the transactions provided by **kcas** do not directly provide
-blocking or the ability to wait for changes to shared memory locations before
-retrying a transaction. The way
-[`commit`](https://ocaml-multicore.github.io/kcas/doc/kcas/Kcas/Tx/index.html#val-commit)
-works is that it simply retries the transaction in case it failed. To avoid
-contention, a
-[`backoff`](https://ocaml-multicore.github.io/kcas/doc/kcas/Kcas/Backoff/index.html)
-mechanism is used, but otherwise
-[`commit`](https://ocaml-multicore.github.io/kcas/doc/kcas/Kcas/Tx/index.html#val-commit)
-will essentially perform a
-[busy-wait](https://en.wikipedia.org/wiki/Busy_waiting), which should usually be
-avoided.
 
 ### Programming with explicit transaction log passing
 
@@ -1475,6 +1457,89 @@ val assoc : (string * int) list =
 What we have here is a lock-free hash table with rehashing that should not be
 highly prone to starvation. In other respects this is a fairly naive hash table
 implementation. You might want to think about various ways to improve upon it.
+
+### Blocking
+
+Consider the following approach to unconditionally pop an element from a stack:
+
+```ocaml
+# let pop ~xt stack =
+    match Xt.update ~xt stack tl_safe with
+    | [] -> raise Exit
+    | elem :: _ -> elem
+val pop : xt:'a Xt.t -> 'b list Loc.t -> 'b = <fun>
+```
+
+A transaction that attempts to use the above on an empty stack will be keep on
+retrying until some other domain pushes an element to the stack. This sort of
+[busy-wait](https://en.wikipedia.org/wiki/Busy_waiting) should generally be
+avoided.
+
+```ocaml
+# let stack () : _ stack = Loc.make ~awaitable:true []
+val stack : unit -> 'a stack = <fun>
+```
+
+```ocaml
+# let scheduler : Xt.scheduler =
+    let open struct
+      type t = {
+        mutex : Mutex.t;
+        condition : Condition.t;
+        mutable signaled : bool;
+      }
+    end in
+    let key = Domain.DLS.new_key @@ fun () -> {
+      mutex = Mutex.create ();
+      condition = Condition.create ();
+      signaled = false;
+    } in
+    fun suspend ->
+      let t = Domain.DLS.get key in
+      suspend (fun () ->
+        Mutex.lock t.mutex;
+        t.signaled <- true;
+        Mutex.unlock t.mutex;
+        Condition.broadcast t.condition);
+      Mutex.lock t.mutex;
+      while not t.signaled do
+        Condition.wait t.condition t.mutex
+      done;
+      t.signaled <- false;
+      Mutex.unlock t.mutex
+val scheduler : Xt.scheduler = <fun>
+```
+
+```ocaml
+# let push ~xt stack elem = Xt.of_tx ~xt (push stack elem)
+val push : xt:'a Xt.t -> 'b list Loc.t -> 'b -> unit = <fun>
+```
+
+```ocaml
+# let input_stack : int stack = stack ()
+val input_stack : int stack = <abstr>
+# let output_stack : int stack = stack ()
+val output_stack : int stack = <abstr>
+```
+
+```ocaml
+# let other = Domain.spawn @@ fun () ->
+    let x = Xt.commit ~scheduler { tx = pop input_stack } in
+    Xt.commit { tx = push output_stack x }
+val other : unit Domain.t = <abstr>
+```
+
+```ocaml
+# Xt.commit { tx = push input_stack 42 }
+- : unit = ()
+# Xt.commit ~scheduler { tx = pop output_stack }
+- : int = 42
+```
+
+```ocaml
+# Domain.join other
+- : unit = ()
+```
 
 ## Development
 

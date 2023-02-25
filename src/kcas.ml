@@ -5,6 +5,13 @@
 
 module Backoff = Backoff
 
+module AwaitableId = struct
+  let id = Atomic.make (Int.min_int asr 1)
+  let get_unique () = Atomic.fetch_and_add id 1
+  let is id = id < 0
+  let to_awaiters id = Int.min_int - 1 - id
+end
+
 module Id = struct
   let id = Atomic.make 1
   let get_unique () = Atomic.fetch_and_add id 1
@@ -30,9 +37,11 @@ end = struct
     [@@inline]
 end
 
+type awaiter = [ `Init | `Resumed | `Waiting of unit -> unit ] Atomic.t
 type determined = [ `After | `Before ]
 
-type 'a loc = { state : 'a state Atomic.t; id : int }
+type 'a loc = { state : 'a state Atomic.t; id : int; awaiters : awaiters }
+and awaiters = awaiter list loc
 and 'a state = { mutable before : 'a; mutable after : 'a; mutable casn : casn }
 and cass = CASN : 'a loc * 'a state * cass * cass -> cass | NIL : cass
 and casn = status Atomic.t
@@ -210,11 +219,26 @@ let cas loc before state =
   && Atomic.compare_and_set loc.state state' state
   [@@inline]
 
+let make_awaiters id =
+  let rec awaiters =
+    {
+      state = Atomic.make @@ new_state [];
+      id = AwaitableId.to_awaiters id;
+      awaiters;
+    }
+  in
+  awaiters
+
 module Loc = struct
   type 'a t = 'a loc
 
-  let make after =
-    { state = Atomic.make @@ new_state after; id = Id.get_unique () }
+  let make ?(awaitable = false) after =
+    let state = Atomic.make @@ new_state after in
+    let id =
+      if awaitable then AwaitableId.get_unique () else Id.get_unique ()
+    in
+    let awaiters = if awaitable then make_awaiters id else Obj.magic () in
+    { state; id; awaiters }
 
   let get_id loc = loc.id [@@inline]
 
@@ -499,6 +523,37 @@ module Xt = struct
 
   let call { tx } = tx [@@inline]
 
+  let rec take_awaiters ~xt awaiters = function
+    | NIL -> awaiters
+    | CASN (loc, state, l, r) ->
+        let awaiters =
+          if l != NIL then take_awaiters ~xt awaiters l else awaiters
+        in
+        if AwaitableId.is loc.id then
+          let awaiters =
+            if state.before != state.after then
+              match exchange ~xt loc.awaiters [] with
+              | [] -> awaiters
+              | aws -> aws :: awaiters
+            else awaiters
+          in
+          take_awaiters ~xt awaiters r
+        else awaiters
+
+  let resume_awaiters awaiters =
+    awaiters
+    |> List.iter @@ List.iter
+       @@ fun awaiter ->
+       match Atomic.exchange awaiter `Resumed with
+       | `Waiting resume -> resume ()
+       | _ -> ()
+    [@@inline never]
+
+  let resume_awaiters = function
+    | [] -> ()
+    | awaiters -> resume_awaiters awaiters
+    [@@inline]
+
   let attempt (mode : Mode.t) tx =
     let xt =
       let casn = Atomic.make (mode :> status)
@@ -507,6 +562,7 @@ module Xt = struct
       { casn; cass; post_commit }
     in
     let result = tx ~xt in
+    let awaiters = take_awaiters ~xt [] xt.cass in
     match xt.cass with
     | NIL -> Action.run xt.post_commit result
     | CASN (loc, state, NIL, NIL) ->
@@ -517,22 +573,97 @@ module Xt = struct
           if cas loc before state then Action.run xt.post_commit result
           else exit ()
     | cass ->
-        if determine_for_owner xt.casn cass then
-          Action.run xt.post_commit result
+        if determine_for_owner xt.casn cass then (
+          resume_awaiters awaiters;
+          Action.run xt.post_commit result)
         else exit ()
 
-  let rec commit backoff mode tx =
-    match attempt mode tx with
-    | result -> result
-    | exception Mode.Interference ->
-        commit (Backoff.once backoff) Mode.lock_free tx
-    | exception Exit -> commit (Backoff.once backoff) mode tx
-
-  let commit ?(backoff = Backoff.default) ?(mode = Mode.obstruction_free) tx =
-    commit backoff mode tx.tx
-    [@@inline]
-
   let attempt ?(mode = Mode.lock_free) tx = attempt mode tx.tx [@@inline]
+
+  type scheduler = ((unit -> unit) -> unit) -> unit
+
+  let rec add_awaiter ~xt awaiter = function
+    | NIL -> ()
+    | CASN (loc, _, l, r) ->
+        if l != NIL then add_awaiter ~xt awaiter l;
+        if AwaitableId.is loc.id then (
+          modify ~xt loc.awaiters (List.cons awaiter);
+          add_awaiter ~xt awaiter r)
+
+  let rec reset casn = function
+    | NIL -> NIL
+    | CASN (loc, state, l, r) as old ->
+        let l' = reset casn l and r' = reset casn r in
+        if is_cmp casn state then
+          if l == l' && r == r' then old else CASN (loc, state, l', r')
+        else
+          let state' = Atomic.get loc.state in
+          let current = eval state' in
+          if current != state.before then exit () else CASN (loc, state', l, r)
+
+  let rec commit backoff (mode : Mode.t) scheduler_opt tx =
+    let xt =
+      let casn = Atomic.make (mode :> status)
+      and cass = NIL
+      and post_commit = Action.noop in
+      { casn; cass; post_commit }
+    in
+    match tx ~xt with
+    | result -> (
+        let awaiters = take_awaiters ~xt [] xt.cass in
+        match xt.cass with
+        | NIL -> Action.run xt.post_commit result
+        | CASN (loc, state, NIL, NIL) ->
+            if is_cmp xt.casn state then Action.run xt.post_commit result
+            else
+              let before = state.before in
+              state.before <- state.after;
+              if cas loc before state then Action.run xt.post_commit result
+              else exit ()
+        | cass -> (
+            match determine_for_owner xt.casn cass with
+            | true ->
+                resume_awaiters awaiters;
+                Action.run xt.post_commit result
+            | false -> commit (Backoff.once backoff) mode scheduler_opt tx
+            | exception Mode.Interference ->
+                commit (Backoff.once backoff) Mode.lock_free scheduler_opt tx))
+    | exception Exit -> (
+        match scheduler_opt with
+        | None -> commit (Backoff.once backoff) mode scheduler_opt tx
+        | Some scheduler -> (
+            match reset xt.casn xt.cass with
+            | cass -> (
+                xt.cass <- cass;
+                let self = Atomic.make `Init in
+                add_awaiter ~xt self cass;
+                if xt.cass == cass then
+                  commit (Backoff.once backoff) mode scheduler_opt tx
+                else
+                  match determine_for_owner xt.casn xt.cass with
+                  | true ->
+                      if Atomic.get self == `Init then
+                        scheduler (fun resume ->
+                            if
+                              not
+                                (Atomic.compare_and_set self `Init
+                                   (`Waiting resume))
+                            then resume ());
+                      (* TODO: remove awaiters *)
+                      commit
+                        (Backoff.once (Backoff.reset backoff))
+                        mode scheduler_opt tx
+                  | false -> commit (Backoff.once backoff) mode scheduler_opt tx
+                  | exception Mode.Interference ->
+                      commit (Backoff.once backoff) Mode.lock_free scheduler_opt
+                        tx)
+            | exception Exit ->
+                commit (Backoff.once backoff) mode scheduler_opt tx))
+
+  let commit ?(backoff = Backoff.default) ?(mode = Mode.obstruction_free)
+      ?scheduler { tx } =
+    commit backoff mode scheduler tx
+    [@@inline]
 
   let of_tx tx ~xt =
     let (_, cass, post_commit), x = tx (xt.casn, xt.cass, xt.post_commit) in

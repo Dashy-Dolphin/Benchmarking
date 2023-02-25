@@ -13,9 +13,13 @@ module Loc : sig
   type 'a t
   (** Type of shared memory locations. *)
 
-  val make : 'a -> 'a t
+  val make : ?awaitable:bool -> 'a -> 'a t
   (** [make initial] creates a new shared memory location with the [initial]
-      value. *)
+      value.
+
+      By default a location is considered to be unawaitable to avoid overheads.
+      {!Xt.commit} cannot block to await for changes to unawaitable locations.
+      To make a location awaitable, simply pass [~awaitable:true]. *)
 
   val get_id : 'a t -> int
   (** [get_id r] returns the unique id of the shared memory location [r]. *)
@@ -473,7 +477,13 @@ module Xt : sig
       the transaction or returns the result of the transaction.  The default for
       [attempt] is {!Mode.lock_free}. *)
 
-  val commit : ?backoff:Backoff.t -> ?mode:Mode.t -> 'a tx -> 'a
+  type scheduler = ((unit -> unit) -> unit) -> unit
+  (** Type of a scheduler that can be called to suspend execution of the current
+      domain or fiber until the resume function given by the scheduler is
+      called. *)
+
+  val commit :
+    ?backoff:Backoff.t -> ?mode:Mode.t -> ?scheduler:scheduler -> 'a tx -> 'a
   (** [commit tx] repeats [attempt tx] until it does not raise [Exit] or
       {!Mode.Interference} and then either returns or raises whatever attempt
       returned or raised.
@@ -484,7 +494,8 @@ module Xt : sig
 
       Note that, aside from using exponential backoff to reduce contention, the
       transaction mechanism has no way to intelligently wait until shared memory
-      locations are modified by other domains. *)
+      locations are modified by other domains unless a suitable {!scheduler} is
+      given. *)
 
   (** {1 Conversions} *)
 
