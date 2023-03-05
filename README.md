@@ -1541,6 +1541,98 @@ val other : unit Domain.t = <abstr>
 - : unit = ()
 ```
 
+#### Communicating transactions
+
+```ocaml
+# type 'a ctx = ('a -> unit Xt.tx) -> unit Xt.tx
+# let sync (a_ctx: _ ctx) =
+    let a_loc = Loc.make ~awaitable:true None in
+    let tx ~xt a =
+      match Xt.exchange ~xt a_loc (Some a) with
+      | None -> ()
+      | Some _ -> raise Exit in
+    Xt.commit (a_ctx @@ fun a -> { tx = tx a});
+    let tx ~xt =
+      match Xt.get ~xt a_loc with
+      | None -> raise Exit
+      | Some a -> a in
+    Xt.commit ~scheduler { tx }
+# let (and+) (a_ctx: _ ctx) (b_ctx: _ ctx) : _ ctx = fun ab_sink ->
+    let tx ~xt =
+      let state = Loc.make `Neither in
+      Xt.call ~xt begin a_ctx @@ fun a ->
+        let tx ~xt =
+          match Xt.exchange ~xt state (`Lhs a) with
+          | `Rhs b -> Xt.call ~xt @@ ab_sink (a, b)
+          | _ -> ()
+        in
+        { tx }
+      end;
+      Xt.call ~xt begin b_ctx @@ fun b ->
+        let tx ~xt =
+          match Xt.exchange ~xt state (`Rhs b) with
+          | `Lhs a -> Xt.call ~xt @@ ab_sink (a, b)
+          | _ -> ()
+        in
+        { tx }
+      end
+    in
+    { tx }
+```
+
+```ocaml
+# type ('a, 'b) half_ch = {
+    loc: ('b -> 'a Xt.tx option Xt.tx) list Loc.t
+  }
+# let half_ch () = { loc = Loc.make [] }
+```
+
+```ocaml
+# let swap fwds bwds a =
+    let res = Loc.make ~awaitable:true None in
+    Xt.commit { tx = fun ~xt ->
+      let rec loop bwds' = function
+        | [] ->
+          let com b = { Xt.tx = fun ~xt ->
+            let com ~xt =
+              Xt.set ~xt res (Some b);
+              a
+            in
+            Some { Xt.tx = com } }
+          in
+          Loc.update fwds.loc (List.cons com) |> ignore
+        | bwd :: rest ->
+          match Xt.call ~xt (bwd a) with
+          | None -> loop (bwd :: bwds') rest
+          | Some com ->
+            Xt.set ~xt res (Some (Xt.call ~xt com));
+            Xt.set ~xt bwds.loc (List.rev_append bwds' rest)
+      in
+      loop [] (Xt.get ~xt bwds.loc) };
+    Xt.commit ~scheduler { tx = fun ~xt ->
+      match Xt.get ~xt res with
+      | None -> raise Exit
+      | Some b -> b }
+
+```
+
+```ocaml
+# type ('a, 'b) swap_ch = {
+    fwds: ('a, 'b) half_ch;
+    bwds: ('b, 'a) half_ch;
+  }
+# let swap_ch () = { fwds = half_ch (); bwds = half_ch () }
+# let fwd ch x = swap ch.fwds ch.bwds x
+# let bwd ch y = swap ch.bwds ch.fwds y
+```
+
+```ocaml
+# let a_ch = swap_ch ()
+# let other = Domain.spawn (fun () -> fwd a_ch 101)
+# bwd a_ch "Hello!"
+# Domain.join other
+```
+
 ## Development
 
 ### Formatting
