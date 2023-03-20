@@ -40,7 +40,13 @@ end
 type awaiter = [ `Init | `Resumed | `Waiting of unit -> unit ] Atomic.t
 type determined = [ `After | `Before ]
 
-type 'a loc = { state : 'a state Atomic.t; id : int; awaiters : awaiters }
+type 'a loc = {
+  state : 'a state Atomic.t;
+  id : int;
+  awaiters : awaiters;
+  mode : determined;
+}
+
 and awaiters = awaiter list loc
 and 'a state = { mutable before : 'a; mutable after : 'a; mutable casn : casn }
 and cass = CASN : 'a loc * 'a state * cass * cass -> cass | NIL : cass
@@ -207,8 +213,9 @@ let rec update_no_alloc backoff loc state set_after =
     let backoff = Backoff.once backoff in
     update_no_alloc backoff loc state set_after
 
-let is_obstruction_free casn =
+let is_obstruction_free casn loc =
   Atomic.get casn == (Mode.obstruction_free :> status)
+  && loc.mode == Mode.obstruction_free
   [@@inline]
 
 let cas loc before state =
@@ -225,6 +232,7 @@ let make_awaiters id =
       state = Atomic.make @@ new_state [];
       id = AwaitableId.to_awaiters id;
       awaiters;
+      mode = Mode.lock_free;
     }
   in
   awaiters
@@ -232,13 +240,13 @@ let make_awaiters id =
 module Loc = struct
   type 'a t = 'a loc
 
-  let make ?(awaitable = false) after =
+  let make ?(awaitable = false) ?(mode = Mode.obstruction_free) after =
     let state = Atomic.make @@ new_state after in
     let id =
       if awaitable then AwaitableId.get_unique () else Id.get_unique ()
     in
     let awaiters = if awaitable then make_awaiters id else Obj.magic () in
-    { state; id; awaiters }
+    { state; id; awaiters; mode }
 
   let get_id loc = loc.id [@@inline]
 
@@ -306,13 +314,13 @@ module Op = struct
         let rec run cass = function
           | [] -> determine_for_owner casn cass
           | CAS (loc, before, after) :: rest ->
-              if before == after && is_obstruction_free casn then
+              if before == after && is_obstruction_free casn loc then
                 let state = Atomic.get loc.state in
                 before == eval state && run (insert cass loc state) rest
               else run (insert cass loc { before; after; casn }) rest
         in
         let (CAS (loc, before, after)) = first in
-        if before == after && is_obstruction_free casn then
+        if before == after && is_obstruction_free casn loc then
           let state = Atomic.get loc.state in
           before == eval state && run (CASN (loc, state, NIL, NIL)) rest
         else run (CASN (loc, { before; after; casn }, NIL, NIL)) rest
@@ -323,7 +331,7 @@ let update_as0 g loc f casn post_commit l r =
   let before = eval state in
   let after = f before in
   let state =
-    if before == after && is_obstruction_free casn then state
+    if before == after && is_obstruction_free casn loc then state
     else { before; after; casn }
   in
   ((casn, CASN (loc, state, l, r), post_commit), g before)
@@ -459,7 +467,7 @@ module Xt = struct
     let before = eval state in
     let after = f before in
     let state =
-      if before == after && is_obstruction_free xt.casn then state
+      if before == after && is_obstruction_free xt.casn loc then state
       else { before; after; casn = xt.casn }
     in
     xt.cass <- CASN (loc, state, l, r);

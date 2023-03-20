@@ -8,12 +8,35 @@ module Backoff : module type of Backoff
     Individual shared memory locations can be manipulated through the {!Loc}
     module that is essentially compatible with the Stdlib [Atomic] module. *)
 
+(** Operating modes of the [k-CAS-n-CMP] algorithm. *)
+module Mode : sig
+    type t
+    (** Type of an operating mode of the [k-CAS-n-CMP] algorithm. *)
+  
+    val lock_free : t
+    (** In [lock_free] mode the algorithm makes sure that at least one domain will
+        be able to make progress by performing read-only operations as read-write
+        operations. *)
+  
+    val obstruction_free : t
+    (** In [obstruction_free] mode the algorithm proceeds optimistically and
+        allows read-only operations to fail due to {!Interference} from other
+        domains that might have been prevented in the {!lock_free} mode. *)
+  
+    exception Interference
+    (** Exception raised when interference from other domains is detected in the
+        {!obstruction_free} mode.  Interference may happen when some location is
+        accessed by both a compare-and-set and a (read-only) compare operation.
+        It is not necessary for the compare-and-set to actually change the logical
+        value of the location. *)
+  end
+
 (** Shared memory locations. *)
 module Loc : sig
   type 'a t
   (** Type of shared memory locations. *)
 
-  val make : ?awaitable:bool -> 'a -> 'a t
+  val make : ?awaitable:bool -> ?mode:Mode.t -> 'a -> 'a t
   (** [make initial] creates a new shared memory location with the [initial]
       value.
 
@@ -23,6 +46,8 @@ module Loc : sig
 
   val get_id : 'a t -> int
   (** [get_id r] returns the unique id of the shared memory location [r]. *)
+
+
 
   val get : 'a t -> 'a
   (** [get r] reads the current value of the shared memory location [r]. *)
@@ -80,28 +105,7 @@ end
     exceptions to signal failure.  Failure on the third phase raises
     {!Mode.Interference}. *)
 
-(** Operating modes of the [k-CAS-n-CMP] algorithm. *)
-module Mode : sig
-  type t
-  (** Type of an operating mode of the [k-CAS-n-CMP] algorithm. *)
 
-  val lock_free : t
-  (** In [lock_free] mode the algorithm makes sure that at least one domain will
-      be able to make progress by performing read-only operations as read-write
-      operations. *)
-
-  val obstruction_free : t
-  (** In [obstruction_free] mode the algorithm proceeds optimistically and
-      allows read-only operations to fail due to {!Interference} from other
-      domains that might have been prevented in the {!lock_free} mode. *)
-
-  exception Interference
-  (** Exception raised when interference from other domains is detected in the
-      {!obstruction_free} mode.  Interference may happen when some location is
-      accessed by both a compare-and-set and a (read-only) compare operation.
-      It is not necessary for the compare-and-set to actually change the logical
-      value of the location. *)
-end
 
 (** Operations on shared memory locations. *)
 module Op : sig
