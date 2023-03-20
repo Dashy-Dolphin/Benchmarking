@@ -56,3 +56,8 @@
  (name example)
  (libraries kcas)
  (modules example))
+
+(executable
+   (name tx_loc_modes) 
+   (libraries kcas barrier) 
+   (modules tx_loc_modes))
