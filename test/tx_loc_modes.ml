@@ -39,7 +39,7 @@ let counter_thread i () =
     Xt.commit { tx };
 
     (* Delay for a bit.  If we don't delay enough, we can starve the accumulator. *)
-    for _ = 1 to Random.int 100 do
+    for _ = 1 to Random.int 1000 do
       Domain.cpu_relax ()
     done
   done

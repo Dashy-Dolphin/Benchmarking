@@ -627,7 +627,7 @@ module Xt = struct
               let before = state.before in
               state.before <- state.after;
               if cas loc before state then Action.run xt.post_commit result
-              else exit ()
+              else commit (Backoff.once backoff) mode scheduler_opt tx
         | cass -> (
             match determine_for_owner xt.casn cass with
             | true ->
