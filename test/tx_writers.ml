@@ -1,13 +1,10 @@
 open Kcas
 
 let loop_count = try int_of_string Sys.argv.(1) with _ -> 36288
-
-let mode =
-  try if Sys.argv.(2) = "lock-free" then Some Mode.lock_free else None
-  with _ -> None
+let mode = Mode.lock_free
 
 (* Number of shared counters being used to try to cause interference *)
-let n_counters = 16
+let n_counters = try int_of_string Sys.argv.(2) with _ -> 36288
 let op_per_domain = loop_count / n_counters
 
 (* Counters are first initialized with a dummy location *)
