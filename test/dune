@@ -66,3 +66,8 @@
    (name tx_writers) 
    (libraries kcas barrier) 
    (modules tx_writers))
+
+(executable
+   (name tx_readers) 
+   (libraries kcas barrier) 
+   (modules tx_readers))

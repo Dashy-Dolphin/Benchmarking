@@ -21,7 +21,7 @@ let counter_thread _ () =
 
   for _ = 1 to op_per_domain do
     (* Increment the accumulator to cause interference *)
-    Xt.commit { tx };
+    let _ = Xt.commit { tx } in
 
     (* Delay for a bit.  If we don't delay enough, we can starve the accumulator. *)
     for _ = 1 to Random.int 1000 do
