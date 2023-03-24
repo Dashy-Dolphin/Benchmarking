@@ -7,7 +7,7 @@ let mode =
   with _ -> None
 
 (* Number of shared counters being used to try to cause interference *)
-let n_counters = 1
+let n_counters = try int_of_string Sys.argv.(3) with _ -> 1
 
 (* Number of private accumulators used for extra work *)
 let n_accumulators = 1
