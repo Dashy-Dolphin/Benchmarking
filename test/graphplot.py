@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import subprocess
 
-loop_count = 20000
+loop_count = 200000
 mode = 'lock-free'
 n_counter = 1
 xpoints = np.array([1,2,3,4,5,10,15,20,25])
@@ -11,7 +11,7 @@ ypoints = []
 
 for x in xpoints:
     n_counter = x
-    proc = subprocess.Popen(["hyperfine --warmup 2 \"dune exec ./tx_readers.exe " + str(loop_count) + " " + mode + " " +str(n_counter) +"\" -i --show-output" ], stdout=subprocess.PIPE, shell=True)
+    proc = subprocess.Popen(["hyperfine --warmup 2 \"dune exec ./tx_loc_modes.exe " + str(loop_count) + " " + mode + " " +str(n_counter) +"\" -i --show-output" ], stdout=subprocess.PIPE, shell=True)
     (out, err) = proc.communicate()
 
     out = out.decode()
