@@ -1,11 +1,11 @@
 import matplotlib.pyplot as plt
-import numpy as np
+
 import subprocess
 
 loop_count = 200000
 mode = 'lock-free'
 n_counter = 1
-xpoints = np.array([1,2,3,4,5,10,15,20,25])
+xpoints = [1,2,3,4,5,10,15,20,25]
 #xpoints = [1]
 ypoints = []
 
@@ -43,6 +43,6 @@ plt.title('CAS Performance (Lock-free)')
 plt.show()
 
 print("\n")
-print("xpoints = " +xpoints)
-print("ypoints = " +ypoints)
+print("xpoints = ",xpoints)
+print("ypoints = ", ypoints)
 
