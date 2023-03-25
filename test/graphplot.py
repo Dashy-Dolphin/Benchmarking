@@ -42,7 +42,7 @@ plt.title('CAS Performance (Lock-free)')
 
 plt.show()
 
-
-print(xpoints)
-print(ypoints)
+print("\n")
+print("xpoints = " +xpoints)
+print("ypoints = " +ypoints)
 
