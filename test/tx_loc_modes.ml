@@ -11,6 +11,7 @@ let n_counters = try int_of_string Sys.argv.(3) with _ -> 1
 
 (* Number of private accumulators used for extra work *)
 let n_accumulators = 1
+let sleep_time = try int_of_string Sys.argv.(4) with _ -> 100
 
 (* Set to true when the accumulator work is done and counter threads may exit.
    This way we ensure that the counter threads are causing interference for
@@ -39,7 +40,7 @@ let counter_thread i () =
     Xt.commit { tx };
 
     (* Delay for a bit.  If we don't delay enough, we can starve the accumulator. *)
-    for _ = 1 to Random.int 1000 do
+    for _ = 1 to Random.int sleep_time do
       Domain.cpu_relax ()
     done
   done
