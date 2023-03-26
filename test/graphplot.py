@@ -5,7 +5,7 @@ import subprocess
 loop_count = 100000
 mode = 'lock-free'
 n_counter = 1
-sleep_time = 100
+sleep_time = 1000
 
 
 xpoints = [1,2,3,4,5,10,15]
@@ -13,6 +13,7 @@ xpoints = [1,2,3,4,5,10,15]
 ypoints = []
 
 for x in xpoints:
+    print(x)
     n_counter = x
     proc = subprocess.Popen(["hyperfine --warmup 2 \"dune exec ./tx_loc_modes.exe " + str(loop_count) + " " + mode + " " +str(n_counter) +" " + str(sleep_time)+"\" -i" ], stdout=subprocess.PIPE, shell=True)
     (out, err) = proc.communicate()
@@ -48,6 +49,7 @@ mode = 'obstruction-free'
 ypoints = []
 
 for x in xpoints:
+    print(x)
     n_counter = x
     proc = subprocess.Popen(["hyperfine --warmup 2 \"dune exec ./tx_loc_modes.exe " + str(loop_count) + " " + mode + " " +str(n_counter) +" " + str(sleep_time)+"\" -i" ], stdout=subprocess.PIPE, shell=True)
     (out, err) = proc.communicate()
