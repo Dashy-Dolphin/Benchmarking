@@ -5,7 +5,7 @@ import subprocess
 loop_count = 200000
 mode = 'lock-free'
 n_counter = 1
-xpoints = [1,2,3,4,5,10,15]
+xpoints = [1,2,3,4,5,10,15,20]
 #xpoints = [1]
 ypoints = []
 
