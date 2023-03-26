@@ -1,11 +1,12 @@
 import matplotlib.pyplot as plt
 
 import subprocess
+import sys
 
 loop_count = 100000
 mode = 'lock-free'
 n_counter = 1
-sleep_time = 1000
+sleep_time = sys.argv[1]
 
 
 xpoints = [1,2,3,4,5,8,10,13,15]
