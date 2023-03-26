@@ -8,7 +8,7 @@ n_counter = 1
 sleep_time = 1000
 
 
-xpoints = [1,2,3,4,5,10,15]
+xpoints = [1,2,3,4,5,8,10,13,15]
 #xpoints = [1]
 ypoints = []
 
@@ -20,7 +20,7 @@ for x in xpoints:
 
     out = out.decode()
     value = out.split('\n')[1].split()[4:6]
-
+    value[0] = int(value[0])
     if (value[1] != 'ms'):
         value[0]  *= 1000
     ypoints.append(value[0])
@@ -56,7 +56,7 @@ for x in xpoints:
 
     out = out.decode()
     value = out.split('\n')[1].split()[4:6]
-
+    value[0] = int(value[0])
     if (value[1] != 'ms'):
         value[0]  *= 1000
     ypoints.append(value[0])
