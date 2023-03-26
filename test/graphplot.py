@@ -2,16 +2,19 @@ import matplotlib.pyplot as plt
 
 import subprocess
 
-loop_count = 200000
+loop_count = 100000
 mode = 'lock-free'
 n_counter = 1
-xpoints = [1,2,3,4,5,10,15,20]
+sleep_time = 100
+
+
+xpoints = [1,2,3,4,5,10,15]
 #xpoints = [1]
 ypoints = []
 
 for x in xpoints:
     n_counter = x
-    proc = subprocess.Popen(["hyperfine --warmup 2 \"dune exec ./tx_loc_modes.exe " + str(loop_count) + " " + mode + " " +str(n_counter) +"\" -i --show-output" ], stdout=subprocess.PIPE, shell=True)
+    proc = subprocess.Popen(["hyperfine --warmup 2 \"dune exec ./tx_loc_modes.exe " + str(loop_count) + " " + mode + " " +str(n_counter) +" " + str(sleep_time)+"\" -i" ], stdout=subprocess.PIPE, shell=True)
     (out, err) = proc.communicate()
 
     out = out.decode()
@@ -35,14 +38,28 @@ for x in xpoints:
 #ypoints = np.array([5762, 2967 ,  1584, 872.4,530.9,  348.0,    379.7,  462.5,459.3, 455.0,459.7, 481.0, 463.2 ])
 #ypoints = np.array([    73.4, 78.4, 79.7, 79.8, 81.0,81.8,106.7, 1108,140727])
 
-plt.plot(xpoints, ypoints)
-plt.ylabel('Op time in ms')
-plt.xlabel('No of Counters')
-plt.title('CAS Performance (Lock-free)')
 
-plt.show()
 
-print("\n")
+print("\nLock-free mode\n")
 print("xpoints = ",xpoints)
 print("ypoints = ", ypoints)
 
+mode = 'obstruction-free'
+ypoints = []
+
+for x in xpoints:
+    n_counter = x
+    proc = subprocess.Popen(["hyperfine --warmup 2 \"dune exec ./tx_loc_modes.exe " + str(loop_count) + " " + mode + " " +str(n_counter) +" " + str(sleep_time)+"\" -i" ], stdout=subprocess.PIPE, shell=True)
+    (out, err) = proc.communicate()
+
+    out = out.decode()
+    value = out.split('\n')[1].split()[4:6]
+
+    if (value[1] != 'ms'):
+        value[0]  *= 1000
+    ypoints.append(value[0])
+
+
+print("\nobstruction-free mode\n")
+print("xpoints = ",xpoints)
+print("ypoints = ", ypoints)
