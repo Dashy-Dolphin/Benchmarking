@@ -9,7 +9,7 @@ n_counter = 1
 sleep_time = sys.argv[1]
 
 
-xpoints = [1,2,3,4,5,8,10,13,15]
+xpoints = [1,2,3,4,5,8,10,13,15,18,20]
 #xpoints = [1]
 ypoints = []
 

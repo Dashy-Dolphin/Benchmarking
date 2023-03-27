@@ -1,7 +1,7 @@
 open Kcas
 
 let loop_count = try int_of_string Sys.argv.(1) with _ -> 36288
-let mode = Mode.lock_free
+let mode = Mode.obstruction_free
 
 (* Number of shared counters being used to try to cause interference *)
 let n_counters = try int_of_string Sys.argv.(2) with _ -> 2
