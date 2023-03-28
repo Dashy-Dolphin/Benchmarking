@@ -635,7 +635,7 @@ module Xt = struct
                 Action.run xt.post_commit result
             | false -> commit (Backoff.once backoff) mode scheduler_opt tx
             | exception Mode.Interference ->
-                commit (Backoff.once backoff) Mode.lock_free scheduler_opt tx))
+                commit (Backoff.once backoff) mode scheduler_opt tx))
     | exception Exit -> (
         match scheduler_opt with
         | None -> commit (Backoff.once backoff) mode scheduler_opt tx
@@ -663,8 +663,7 @@ module Xt = struct
                         mode scheduler_opt tx
                   | false -> commit (Backoff.once backoff) mode scheduler_opt tx
                   | exception Mode.Interference ->
-                      commit (Backoff.once backoff) Mode.lock_free scheduler_opt
-                        tx)
+                      commit (Backoff.once backoff) mode scheduler_opt tx)
             | exception Exit ->
                 commit (Backoff.once backoff) mode scheduler_opt tx))
 
