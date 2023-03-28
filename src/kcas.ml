@@ -635,7 +635,7 @@ module Xt = struct
                 Action.run xt.post_commit result
             | false -> commit (Backoff.once backoff) mode scheduler_opt tx
             | exception Mode.Interference ->
-                if count < 5 then
+                if count < 10 then
                   commit ~count:(count + 1) (Backoff.once backoff) mode
                     scheduler_opt tx
                 else
@@ -668,7 +668,7 @@ module Xt = struct
                         mode scheduler_opt tx
                   | false -> commit (Backoff.once backoff) mode scheduler_opt tx
                   | exception Mode.Interference ->
-                      if count < 5 then
+                      if count < 10 then
                         commit ~count:(count + 1) (Backoff.once backoff) mode
                           scheduler_opt tx
                       else
