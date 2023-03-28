@@ -609,7 +609,7 @@ module Xt = struct
           let current = eval state' in
           if current != state.before then exit () else CASN (loc, state', l, r)
 
-  let rec commit backoff (mode : Mode.t) scheduler_opt tx =
+  let rec commit ?(count = 0) backoff (mode : Mode.t) scheduler_opt tx =
     let xt =
       let casn = Atomic.make (mode :> status)
       and cass = NIL
@@ -635,7 +635,12 @@ module Xt = struct
                 Action.run xt.post_commit result
             | false -> commit (Backoff.once backoff) mode scheduler_opt tx
             | exception Mode.Interference ->
-                commit (Backoff.once backoff) mode scheduler_opt tx))
+                if count < 1 then
+                  commit ~count:(count + 1) (Backoff.once backoff) mode
+                    scheduler_opt tx
+                else
+                  commit (Backoff.once backoff) Mode.lock_free scheduler_opt tx)
+        )
     | exception Exit -> (
         match scheduler_opt with
         | None -> commit (Backoff.once backoff) mode scheduler_opt tx
@@ -663,13 +668,18 @@ module Xt = struct
                         mode scheduler_opt tx
                   | false -> commit (Backoff.once backoff) mode scheduler_opt tx
                   | exception Mode.Interference ->
-                      commit (Backoff.once backoff) mode scheduler_opt tx)
+                      if count < 1 then
+                        commit ~count:(count + 1) (Backoff.once backoff) mode
+                          scheduler_opt tx
+                      else
+                        commit (Backoff.once backoff) Mode.lock_free
+                          scheduler_opt tx)
             | exception Exit ->
                 commit (Backoff.once backoff) mode scheduler_opt tx))
 
-  let commit ?(backoff = Backoff.default) ?(mode = Mode.obstruction_free)
-      ?scheduler { tx } =
-    commit backoff mode scheduler tx
+  let commit ?(count = 0) ?(backoff = Backoff.default)
+      ?(mode = Mode.obstruction_free) ?scheduler { tx } =
+    commit ~count backoff mode scheduler tx
     [@@inline]
 
   let of_tx tx ~xt =

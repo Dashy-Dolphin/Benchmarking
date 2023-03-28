@@ -486,7 +486,7 @@ module Xt : sig
       domain or fiber until the resume function given by the scheduler is
       called. *)
 
-  val commit :
+  val commit : ?count:int ->
     ?backoff:Backoff.t -> ?mode:Mode.t -> ?scheduler:scheduler -> 'a tx -> 'a
   (** [commit tx] repeats [attempt tx] until it does not raise [Exit] or
       {!Mode.Interference} and then either returns or raises whatever attempt
