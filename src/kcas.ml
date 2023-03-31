@@ -609,6 +609,8 @@ module Xt = struct
           let current = eval state' in
           if current != state.before then exit () else CASN (loc, state', l, r)
 
+
+  let obstruction_free_depth = 2 in
   let rec commit ?(count = 0) backoff (mode : Mode.t) scheduler_opt tx =
     let xt =
       let casn = Atomic.make (mode :> status)
@@ -635,7 +637,7 @@ module Xt = struct
                 Action.run xt.post_commit result
             | false -> commit (Backoff.once backoff) mode scheduler_opt tx
             | exception Mode.Interference ->
-                if count < 0 then
+                if count < obstruction_free_depth then
                   commit ~count:(count + 1) (Backoff.once backoff) mode
                     scheduler_opt tx
                 else
@@ -668,7 +670,7 @@ module Xt = struct
                         mode scheduler_opt tx
                   | false -> commit (Backoff.once backoff) mode scheduler_opt tx
                   | exception Mode.Interference ->
-                      if count < 0 then
+                      if count < obstruction_free_depth then
                         commit ~count:(count + 1) (Backoff.once backoff) mode
                           scheduler_opt tx
                       else
