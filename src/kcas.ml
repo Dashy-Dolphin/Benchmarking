@@ -610,7 +610,7 @@ module Xt = struct
           if current != state.before then exit () else CASN (loc, state', l, r)
 
 
-  let obstruction_free_depth = 2 in
+  let obstruction_free_depth = 1 in
   let rec commit ?(count = 0) backoff (mode : Mode.t) scheduler_opt tx =
     let xt =
       let casn = Atomic.make (mode :> status)

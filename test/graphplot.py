@@ -4,28 +4,37 @@ import subprocess
 import sys
 
 loop_count = 200000
-mode = 'lock-free'
+mode = 'obstruction-free'
 n_counter = 1
-sleep_time = sys.argv[1]
+
 
 
 xpoints = [1,2,3,4,5,8,10,13,15,18,20,23,25,27,30,33, 35]
 #xpoints = [1]
 ypoints = []
+sleep= [100, 500, 1000]
 
-for x in xpoints:
-    print(x)
-    n_counter = x
-    proc = subprocess.Popen(["hyperfine --warmup 2 \"dune exec ./tx_loc_modes.exe " + str(loop_count) + " " + mode + " " +str(n_counter) +" " + str(sleep_time)+"\" -i" ], stdout=subprocess.PIPE, shell=True)
-    #proc = subprocess.Popen(["hyperfine --warmup 2 \"dune exec ./tx_readers.exe 36288 " + str(n_counter) + "\""  ], stdout=subprocess.PIPE, shell=True)
-    (out, err) = proc.communicate()
+for t1 in sleep:
 
-    out = out.decode()
-    value = out.split('\n')[1].split()[4:6]
-    value[0] = float(value[0])
-    if (value[1] != 'ms'):
-        value[0]  *= 1000
-    ypoints.append(value[0])
+    print ("hybrid mode with sleep time = ", t1, "ms")
+    for x in xpoints:
+        print(x)
+        n_counter = x
+        proc = subprocess.Popen(["hyperfine --warmup 2 \"dune exec ./tx_loc_modes.exe " + str(loop_count) + " " + mode + " " +str(n_counter) +" " + str(t1)+"\" -i" ], stdout=subprocess.PIPE, shell=True)
+        #proc = subprocess.Popen(["hyperfine --warmup 2 \"dune exec ./tx_readers.exe 36288 " + str(n_counter) + "\""  ], stdout=subprocess.PIPE, shell=True)
+        (out, err) = proc.communicate()
+
+        out = out.decode()
+        value = out.split('\n')[1].split()[4:6]
+        value[0] = float(value[0])
+        if (value[1] != 'ms'):
+            value[0]  *= 1000
+        ypoints.append(value[0])
+
+
+    print("xpoints = ",xpoints)
+    print("ypoints = ", ypoints)
+
 
 
     
@@ -35,35 +44,28 @@ for x in xpoints:
 
 
 
-#xpoints = np.array([1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024,2048,4096,8096, 160192, 320384])
-
-#ypoints = np.array([5767, 2972, 1594 , 874.2 , 537.8 , 342.7  , 390.9, 459.7, 462.6, 461.3, 460.1, 463.7,476.4,461.6 , 483.3,  529.2])
-#ypoints = np.array([5762, 2967 ,  1584, 872.4,530.9,  348.0,    379.7,  462.5,459.3, 455.0,459.7, 481.0, 463.2 ])
-#ypoints = np.array([    73.4, 78.4, 79.7, 79.8, 81.0,81.8,106.7, 1108,140727])
-
-
 
 print("\nLock-free mode\n")
 print("xpoints = ",xpoints)
 print("ypoints = ", ypoints)
 
-mode = 'obstruction-free'
-ypoints = []
+# mode = 'obstruction-free'
+# ypoints = []
 
-for x in xpoints:
-    print(x)
-    n_counter = x
-    proc = subprocess.Popen(["hyperfine --warmup 2 \"dune exec ./tx_loc_modes.exe " + str(loop_count) + " " + mode + " " +str(n_counter) +" " + str(sleep_time)+"\" -i" ], stdout=subprocess.PIPE, shell=True)
-    (out, err) = proc.communicate()
+# for x in xpoints:
+#     print(x)
+#     n_counter = x
+#     proc = subprocess.Popen(["hyperfine --warmup 2 \"dune exec ./tx_loc_modes.exe " + str(loop_count) + " " + mode + " " +str(n_counter) +" " + str(sleep_time)+"\" -i" ], stdout=subprocess.PIPE, shell=True)
+#     (out, err) = proc.communicate()
 
-    out = out.decode()
-    value = out.split('\n')[1].split()[4:6]
-    value[0] = float(value[0])
-    if (value[1] != 'ms'):
-        value[0]  *= 1000
-    ypoints.append(value[0])
+#     out = out.decode()
+#     value = out.split('\n')[1].split()[4:6]
+#     value[0] = float(value[0])
+#     if (value[1] != 'ms'):
+#         value[0]  *= 1000
+#     ypoints.append(value[0])
 
 
-print("\nobstruction-free mode\n")
-print("xpoints = ",xpoints)
-print("ypoints = ", ypoints)
+# print("\nobstruction-free mode\n")
+# print("xpoints = ",xpoints)
+# print("ypoints = ", ypoints)
