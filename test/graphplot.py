@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 
 import subprocess
-import sys
+
 
 loop_count = 200000
 mode = 'obstruction-free'
