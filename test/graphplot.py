@@ -1,5 +1,3 @@
-import matplotlib.pyplot as plt
-
 import subprocess
 
 
@@ -16,12 +14,12 @@ sleep= [100, 500, 1000]
 
 for t1 in sleep:
     ypoints = []
-    print ("hybrid mode with sleep time = ", t1, "ms")
+    print ("obstruction-free with sleep time = ", t1, "ms")
     for x in xpoints:
         print(x)
         n_counter = x
         proc = subprocess.Popen(["hyperfine --warmup 2 \"dune exec ./tx_loc_modes.exe " + str(loop_count) + " " + mode + " " +str(n_counter) +" " + str(t1)+"\" -i" ], stdout=subprocess.PIPE, shell=True)
-        #proc = subprocess.Popen(["hyperfine --warmup 2 \"dune exec ./tx_readers.exe 36288 " + str(n_counter) + "\""  ], stdout=subprocess.PIPE, shell=True)
+      
         (out, err) = proc.communicate()
 
         out = out.decode()
@@ -36,6 +34,29 @@ for t1 in sleep:
     print("ypoints = ", ypoints)
 
 
+mode = 'lock-free'
+
+
+for t1 in sleep:
+    ypoints = []
+    print ("lock-free with sleep time = ", t1, "ms")
+    for x in xpoints:
+        print(x)
+        n_counter = x
+        proc = subprocess.Popen(["hyperfine --warmup 2 \"dune exec ./tx_loc_modes.exe " + str(loop_count) + " " + mode + " " +str(n_counter) +" " + str(t1)+"\" -i" ], stdout=subprocess.PIPE, shell=True)
+        
+        (out, err) = proc.communicate()
+
+        out = out.decode()
+        value = out.split('\n')[1].split()[4:6]
+        value[0] = float(value[0])
+        if (value[1] != 'ms'):
+            value[0]  *= 1000
+        ypoints.append(value[0])
+
+
+    print("xpoints = ",xpoints)
+    print("ypoints = ", ypoints)
 
     
 
@@ -45,9 +66,6 @@ for t1 in sleep:
 
 
 
-print("\nLock-free mode\n")
-print("xpoints = ",xpoints)
-print("ypoints = ", ypoints)
 
 # mode = 'obstruction-free'
 # ypoints = []
