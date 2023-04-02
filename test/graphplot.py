@@ -15,7 +15,7 @@ ypoints = []
 sleep= [100, 500, 1000]
 
 for t1 in sleep:
-
+    ypoints = []
     print ("hybrid mode with sleep time = ", t1, "ms")
     for x in xpoints:
         print(x)
