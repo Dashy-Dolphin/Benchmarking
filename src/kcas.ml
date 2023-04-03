@@ -609,7 +609,7 @@ module Xt = struct
           let current = eval state' in
           if current != state.before then exit () else CASN (loc, state', l, r)
 
-  let obstruction_free_depth = 1
+  let obstruction_free_depth = 2
 
   let rec commit ?(count = 0) backoff (mode : Mode.t) scheduler_opt tx =
     let xt =
