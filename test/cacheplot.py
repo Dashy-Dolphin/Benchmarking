@@ -23,7 +23,9 @@ for t1 in sleep:
 
        
        
-        out = out.split('\n')[1]
+        out = out.split('\n')[3]
+        print(out)
+        input()
         value = out.split()[4:6]
         value[0] = float(value[0])
         if (value[1] != 'ms'):
