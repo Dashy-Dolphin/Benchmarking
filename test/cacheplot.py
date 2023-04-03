@@ -23,7 +23,8 @@ for t1 in sleep:
 
        
        
-        out = out.split('\n')[3]
+        out = out.split('\n')
+        
         print(out)
         input()
         value = out.split()[4:6]
