@@ -29,7 +29,8 @@ for t1 in sleep:
             value[0]  *= 1000
         ypoints.append(value[0])
 
-        proc = subprocess.Popen([" perf stat -B -e cache-references,cache-misses,cycles,instructions,branches,faults,migrations \"dune exec ./tx_loc_modes.exe " + str(loop_count) + " " + mode + " " +str(n_counter) +" " + str(t1)+"\" -i" ], stdout=subprocess.PIPE, shell=True)
+        proc = subprocess.Popen(["perf stat -B -e cache-references,cache-misses,cycles,instructions,branches,faults,migrations dune exec ./tx_loc_modes.exe " + str(loop_count) + " " + mode + " " +str(n_counter) +" " + str(t1)+" -i" ], stdout=subprocess.PIPE, shell=True)
+        proc = subprocess.Popen(["perf stat -B -e cache-references,cache-misses,cycles,instructions,branches,faults,migrations dune exec ./tx_loc_modes.exe " + str(loop_count) + " " + mode + " " +str(n_counter) +" " + str(t1)+" -i" ], stdout=subprocess.PIPE, shell=True)      
         (out,err) = proc.communicate()
         out = out.decode()
         print(out)
@@ -61,7 +62,9 @@ for t1 in sleep:
             value[0]  *= 1000
         ypoints.append(value[0])
 
-        proc = subprocess.Popen([" perf stat -B -e cache-references,cache-misses,cycles,instructions,branches,faults,migrations \"dune exec ./tx_loc_modes.exe " + str(loop_count) + " " + mode + " " +str(n_counter) +" " + str(t1)+"\" -i" ], stdout=subprocess.PIPE, shell=True)
+        
+        proc = subprocess.Popen(["perf stat -B -e cache-references,cache-misses,cycles,instructions,branches,faults,migrations dune exec ./tx_loc_modes.exe " + str(loop_count) + " " + mode + " " +str(n_counter) +" " + str(t1)+" -i" ], stdout=subprocess.PIPE, shell=True)
+        proc = subprocess.Popen(["perf stat -B -e cache-references,cache-misses,cycles,instructions,branches,faults,migrations dune exec ./tx_loc_modes.exe " + str(loop_count) + " " + mode + " " +str(n_counter) +" " + str(t1)+" -i" ], stdout=subprocess.PIPE, shell=True)
         (out,err) = proc.communicate()
         out = out.decode()
         print(out)
