@@ -7,5 +7,5 @@ sleep_time=85
 
 for n_counter in $n_counter_list
 do 
-    perf stat -B -e cache-references,cache-misses,cycles,instructions,branches,faults,migrations dune exec ./tx_loc_modes.exe $loop_count $mode $n_counter $t1 
+    perf stat -B -e cache-references,cache-misses,cycles,instructions,branches,faults,migrations dune exec ./tx_loc_modes.exe $loop_count $mode $n_counter $sleep_time
 done
