@@ -22,7 +22,7 @@ for t1 in sleep:
         (out, err) = proc.communicate()
 
        
-        out = out.decode()
+       
         out = out.split('\n')[1]
         value = out.split()[4:6]
         value[0] = float(value[0])
