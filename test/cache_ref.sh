@@ -2,7 +2,7 @@
 loop_count=200000
 mode='obstruction-free'
 n_counter_list="1 2 3 4 5 8 10 13 15 18 20 23 25 27 30 33 35"
-sleep_time=85
+sleep_time=850
 
 
 for n_counter in $n_counter_list
