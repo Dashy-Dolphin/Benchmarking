@@ -33,8 +33,8 @@ for t1 in sleep:
             
         
             err = err.split('\n')
-            print(err)
-            err = err[4]
+            
+            err = err[6]
             err = err.split(' ')
             i= 0
             while 1:
