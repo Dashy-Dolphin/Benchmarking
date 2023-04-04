@@ -36,7 +36,14 @@ for t1 in sleep:
         
             err = err[4]
             err = err.split(' ')
-            err = err[36]
+            i= 0
+            while 1:
+                if err[i] == '%':
+                    break
+
+                i=i+1
+
+            err = err[i - 1]
             print(err)
             avg_miss_rate = avg_miss_rate + float(err)
         
