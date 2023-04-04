@@ -31,6 +31,7 @@ for t1 in sleep:
      
         err = err[4]
         err = err.split(' ')
+        err = err[36]
         print(err)
         input()
 
