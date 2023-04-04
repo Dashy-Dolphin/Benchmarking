@@ -6,7 +6,7 @@ mode = 'obstruction-free'
 n_counter = 1
 
 
-perf_count = 14
+perf_count = 10
 
 xpoints = [1,2,3,4,5,8,10,13,15,18,20,23,25,27,30,33, 35]
 ypoints = []
