@@ -22,20 +22,16 @@ for t1 in sleep:
         (out, err) = proc.communicate()
 
        
-        out = out.decode()
+      
         err = err.decode()
      
         
-        out = out.split('\n')
+    
         err = err.split('\n')
         print(err)
-        print(out)
-        input()
-        value = out.split()[4:6]
-        value[0] = float(value[0])
-        if (value[1] != 'ms'):
-            value[0]  *= 1000
-        ypoints.append(value[0])
+        err = err[4]
+        err = err.split(' ')
+        print(err)
 
 
     print("xpoints = ",xpoints)
