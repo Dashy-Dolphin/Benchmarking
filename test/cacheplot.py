@@ -52,3 +52,49 @@ for t1 in sleep:
 
     print("xpoints = ",xpoints)
     print("ypoints = ", ypoints)
+
+
+mode = 'lock-free'
+
+
+for t1 in sleep:
+    ypoints = []
+    print ("lock-free with sleep time = ", t1, "ms")
+    for x in xpoints:
+        print(x)
+        n_counter = x
+
+        avg_miss_rate = float(0.0)
+
+        for lp in range(perf_count):
+            proc = subprocess.Popen(["perf stat -B -e cache-references,cache-misses,cycles,instructions,branches,faults,migrations  ../_build/default/test/tx_loc_modes.exe " + str(loop_count) + " " + mode + " " +str(n_counter) +" " + str(t1) ], stdout=subprocess.PIPE,stderr = subprocess.PIPE, shell=True)
+        
+            (out, err) = proc.communicate()
+
+        
+        
+            err = err.decode()
+        
+            
+        
+            err = err.split('\n')
+        
+            err = err[4]
+            err = err.split(' ')
+            i= 0
+            while 1:
+                if err[i] == '%':
+                    break
+
+                i=i+1
+
+            err = err[i - 1]
+           
+            avg_miss_rate = avg_miss_rate + float(err)
+        
+        avg_miss_rate = avg_miss_rate/perf_count
+        ypoints.append(avg_miss_rate)
+
+    print("xpoints = ",xpoints)
+    print("ypoints = ", ypoints)
+
