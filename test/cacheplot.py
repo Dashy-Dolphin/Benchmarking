@@ -28,10 +28,11 @@ for t1 in sleep:
         
     
         err = err.split('\n')
-        print(err)
+     
         err = err[4]
         err = err.split(' ')
         print(err)
+        input()
 
 
     print("xpoints = ",xpoints)
