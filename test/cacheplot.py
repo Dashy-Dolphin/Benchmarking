@@ -17,7 +17,7 @@ for t1 in sleep:
     for x in xpoints:
         print(x)
         n_counter = x
-        proc = subprocess.Popen(["perf stat -B -e cache-references,cache-misses,cycles,instructions,branches,faults,migrations  ../_build/default/test/tx_loc_modes.exe " + str(loop_count) + " " + mode + " " +str(n_counter) +" " + str(t1) ], stdout=subprocess.PIPE, shell=True)
+        proc = subprocess.Popen(["perf stat -B -e cache-references,cache-misses,cycles,instructions,branches,faults,migrations  ../_build/default/test/tx_loc_modes.exe " + str(loop_count) + " " + mode + " " +str(n_counter) +" " + str(t1) ], stdout=subprocess.PIPE, shell=None)
       
         (out, err) = proc.communicate()
 
