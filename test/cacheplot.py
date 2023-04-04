@@ -44,7 +44,7 @@ for t1 in sleep:
                 i=i+1
 
             err = err[i - 1]
-            print(err)
+           
             avg_miss_rate = avg_miss_rate + float(err)
         
         avg_miss_rate = avg_miss_rate/perf_count
