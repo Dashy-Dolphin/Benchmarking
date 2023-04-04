@@ -22,7 +22,7 @@ for t1 in sleep:
         (out, err) = proc.communicate()
 
        
-       
+        out = out.decode()
         out = out.split('\n')
         
         print(out)
