@@ -11,7 +11,7 @@ xpoints = [1,2,3,4,5,8,10,13,15,18,20,23,25,27,30,33, 35]
 ypoints = []
 sleep = [85,150,250, 350, 450 , 550, 650, 750, 850, 950, 1050]
 n_counter = 15
-n_accumulators = 35
+n_accumulators = 8
 ypoints = []
 
 for t1 in sleep:
