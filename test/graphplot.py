@@ -11,8 +11,9 @@ xpoints = [1,2,3,4,5,8,10,13,15,18,20,23,25,27,30,33, 35]
 ypoints = []
 sleep = [ 400, 450 , 550, 650, 750, 850, 950, 1050 ,1150 ,1250]
 sleep = sleep[::-1]
-n_counter = 18
-n_accumulators = 1
+n_counter = sys.argv[1]
+n_accumulators = sys.argv[2]
+
 ypoints = []
 
 for t1 in sleep:
