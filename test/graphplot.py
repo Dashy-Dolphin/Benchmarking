@@ -44,7 +44,7 @@ for t1 in sleep:
         
         print ("lock-free with sleep time = ", t1, "ms")
       
-        proc = subprocess.Popen(["hyperfine --warmup 2 \"dune exec ./tx_loc_modes.exe " + str(loop_count) + " " + mode + " " +str(n_counter) +" " + str(t1)+"\" -i" ], stdout=subprocess.PIPE, shell=True)
+        proc = subprocess.Popen(["hyperfine --warmup 2 \"dune exec ./tx_loc_modes.exe " + str(loop_count) + " " + mode + " " +str(n_counter) +" "+ str(n_accumulators)+" " + str(t1)+"\" -i" ], stdout=subprocess.PIPE, shell=True)
       
         (out, err) = proc.communicate()
 
