@@ -7,11 +7,13 @@ let mode =
   with _ -> None
 
 (* Number of shared counters being used to try to cause interference *)
-let n_counters = 2
+
 
 (* Number of private accumulators used for extra work *)
-let n_accumulators = try int_of_string Sys.argv.(3) with _ -> 2
-let sleep_time = try int_of_string Sys.argv.(4) with _ -> 85
+let n_counters = try int_of_string Sys.argv.(3) with _ -> 2
+let n_accumulators = try int_of_string Sys.argv.(4) with _ -> 2
+
+let sleep_time = try int_of_string Sys.argv.(5) with _ -> 85
 
 (* Set to true when the accumulator work is done and counter threads may exit.
    This way we ensure that the counter threads are causing interference for

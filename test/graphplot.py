@@ -10,14 +10,15 @@ n_counter = 1
 xpoints = [1,2,3,4,5,8,10,13,15,18,20,23,25,27,30,33, 35]
 ypoints = []
 sleep = [85,150,250, 350, 450 , 550, 650, 750, 850, 950, 1050]
-n_counter = 35
+n_counter = 15
+n_accumulators = 35
 ypoints = []
 
 for t1 in sleep:
       
         print ("obstruction-free with sleep time = ", t1, "ms")
       
-        proc = subprocess.Popen(["hyperfine --warmup 2 \"dune exec ./tx_loc_modes.exe " + str(loop_count) + " " + mode + " " +str(n_counter) +" " + str(t1)+"\" -i" ], stdout=subprocess.PIPE, shell=True)
+        proc = subprocess.Popen(["hyperfine --warmup 2 \"dune exec ./tx_loc_modes.exe " + str(loop_count) + " " + mode + " " +str(n_counter) +" "+str(n_accumulators) + " " + str(t1)+"\" -i" ], stdout=subprocess.PIPE, shell=True)
       
         (out, err) = proc.communicate()
 
