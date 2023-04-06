@@ -12,7 +12,7 @@ ypoints = []
 sleep = [ 400, 450 , 550, 650, 750, 850, 950, 1050 ,1150 ,1250]
 sleep = sleep[::-1]
 n_counter = 16
-n_accumulators = 4
+n_accumulators = 1
 ypoints = []
 
 for t1 in sleep:
