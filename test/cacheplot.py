@@ -8,11 +8,21 @@ n_accumulators = sys.argv[2]
 
 
 perf_count = 10
+left = int(sys.argv[3])
+right = int( sys.argv[4])
 
-xpoints = [1250, 1150, 1050, 950, 850, 750, 650, 550, 450]
+
+sleep = []
+while (left != right):
+      sleep.append(left)
+      left = int(left) + 50
+
+sleep.append(right)
+sleep = sleep[::-1]
+
 ypoints = []
 
-for x in xpoints:
+for x in sleep:
    
         print ("obstruction-free with sleep time = ", x, "ms")
     
@@ -48,7 +58,7 @@ for x in xpoints:
         avg_miss_rate = avg_miss_rate/perf_count
         ypoints.append(avg_miss_rate)
 
-print("xpoints = ",xpoints)
+print("xpoints = ",sleep)
 print("ypoints = ", ypoints)
 
 
