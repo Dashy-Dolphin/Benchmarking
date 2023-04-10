@@ -12,8 +12,8 @@ ypoints = []
 n_counter = sys.argv[1]
 n_accumulators = sys.argv[2]
 
-left = sys.argv[3]
-right = sys.argv[4]
+left = int(sys.argv[3])
+right = int( sys.argv[4])
 sleep = []
 
 while (left != right):
