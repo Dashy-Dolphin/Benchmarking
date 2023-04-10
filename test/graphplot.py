@@ -8,10 +8,22 @@ n_counter = 1
 
 
 ypoints = []
-sleep = [  85, 150,250,350,450 , 550, 650, 750, 850, 950, 1050 ,1150 ,1250]
-sleep = sleep[::-1]
+
 n_counter = sys.argv[1]
 n_accumulators = sys.argv[2]
+
+left = sys.argv[3]
+right = sys.argv[4]
+sleep = []
+
+while (left != right):
+      sleep.append(left)
+      left = int(left) + 50
+
+sleep.append(right)
+
+sleep = sleep[::-1]
+      
 
 ypoints = []
 
