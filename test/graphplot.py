@@ -8,7 +8,7 @@ n_counter = 1
 
 
 ypoints = []
-sleep = [  450 , 550, 650, 750, 850, 950, 1050 ,1150 ,1250]
+sleep = [  85, 150,250,350,450 , 550, 650, 750, 850, 950, 1050 ,1150 ,1250]
 sleep = sleep[::-1]
 n_counter = sys.argv[1]
 n_accumulators = sys.argv[2]
